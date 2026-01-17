@@ -1,0 +1,142 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Fields Group - Lead Report</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+    <!-- ====================== USER LOCALSTORAGE CODE ======================= -->
+    <script>
+        let user = null;
+        try {
+            const raw = localStorage.getItem("emp_user");
+            if (raw) user = JSON.parse(raw);
+        } catch (e) {
+            console.error("Error parsing emp_user:", e);
+        }
+
+        if (!user || !user.emp_id) {
+            alert("No logged-in user found. Please login first.");
+            window.location.replace("index.html");
+        }
+    </script>
+    <!-- ==================================================================== -->
+    <!-- SIDE MENU -->
+    <div id="sideMenu" class="side-menu">
+        <div class="menu-top">
+            <img src="img/Fields-Group.png" class="menu-logo" />
+            <button id="closeMenu" class="close-btn">✕</button>
+        </div>
+
+        <nav class="menu-list">
+            <a class="menu-item active" onclick="Dashboard()">Home</a>
+            <a class="menu-item" onclick="profile()">Profile</a>
+            <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+            <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+            <a class="menu-item" onclick="lead()">Lead Genration</a>
+            <a class="menu-item" onclick="leadReport()">Lead Report</a>
+            <a class="menu-item" onclick="service()">Service Enquiry</a>
+            <a class="menu-item" onclick="serviceReport()">Service Report</a>
+            <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+            <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+            <a class="menu-item" onclick="logout()">Log Out</a>
+        </nav>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div class="page">
+
+        <header class="topbar">
+            <button id="openMenu" class="hamb">☰</button>
+            <div style="flex:1"></div>
+        </header>
+
+        <section class="user-card">
+            <h3>Lead Report</h3>
+        </section>
+
+        <section class="login-card">
+            <div id="LeadReportContainer"></div>
+        </section>
+
+    </div>
+
+    <script src="cordova.js"></script>
+    <script src="js/menu.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            let user = JSON.parse(localStorage.getItem("emp_user") || "{}");
+            let Emp_ID = user.emp_id;
+
+            if (!Emp_ID) {
+                alert("User not logged in");
+                return;
+            }
+
+            loadLeadReport(Emp_ID);
+        });
+
+        function loadLeadReport(Emp_ID) {
+
+            fetch("https://empapp.kaizensoftware.in/api/LeadApi/lead-report?Emp_ID=" + Emp_ID)
+                .then(res => res.json())
+                .then(data => {
+
+                    let html = "";
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        html = `<p style="text-align:center;color:red">No Lead Report Found</p>`;
+                    } else {
+
+                        data.forEach(row => {
+                            html += `
+                        <div class="table-responsive" style="margin-bottom:12px">
+                            <table class="table" style="width:100%">
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2" style="font-size:medium">
+
+                                            <strong style="color:brown;">
+                                                Customer Name: ${row.CUSTOMER_NAME ?? ""}
+                                            </strong>
+                                            <br>
+
+                                            <strong>Mob. No:</strong> ${row.CONTACT_NO ?? ""}
+                                            <br>
+
+                                            <strong>Source / Model:</strong>
+                                            ${row.LEAD_SOURCE ?? ""} | ${row.MODEL_NAME ?? ""}
+                                            <br>
+
+                                            <strong>Create Date:</strong> ${row.CREATE_DATE ?? ""}
+                                            <br>
+
+                                            <strong>Followup Date:</strong> ${row.FOLLOWUP_DATE ?? ""}
+                                            <br><br>
+
+                                            <button type="button">Update</button>
+
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>`;
+                        });
+                    }
+
+                    document.getElementById("LeadReportContainer").innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error loading Lead Report!");
+                });
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Fields Group - Login</title>
+    <link rel="stylesheet" href="css/index.css" />
+</head>
+
+<body>
+
+    <script>
+        /* 🔐 AUTO LOGIN CHECK */
+        if (localStorage.getItem("isLoggedIn") === "1" &&
+            localStorage.getItem("emp_user")) {
+            window.location.replace("Home.html");
+        }
+    </script>
+
+    <div class="login-card" id="loginCard">
+        <img src="img/Fields-Group.png" class="logo" alt="Fields Group" />
+        <h3>Sign in your account</h3>
+
+        <label>Username</label>
+        <input id="username" placeholder="Enter username" />
+
+        <label>Password</label>
+        <div class="password-wrapper">
+            <input id="password" type="password" placeholder="Enter password" />
+            <span id="togglePassword" class="toggle-eye">👁️</span>
+        </div>
+
+        <a id="forgot" href="#">Forgot Password ?</a>
+        <button id="signin">Sign In</button>
+        <a id="create" href="#">Create an account</a>
+    </div>
+
+    <script>
+        /* PASSWORD TOGGLE */
+        const pwd = document.getElementById("password");
+        document.getElementById("togglePassword").onclick = () => {
+            pwd.type = pwd.type === "password" ? "text" : "password";
+        };
+
+        /* LOGIN */
+        document.getElementById("signin").onclick = async () => {
+
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!username || !password) {
+                alert("Enter username & password");
+                return;
+            }
+
+            try {
+                const res = await fetch(
+                    "https://empapp.kaizensoftware.in/api/Auth/login",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            Username: username,
+                            Password: password
+                        })
+                    }
+                );
+
+                const json = await res.json();
+
+                if (!res.ok || json.status !== true) {
+                    alert(json.message || "Login failed");
+                    return;
+                }
+
+                /* ✅ SAVE LOGIN SESSION */
+                localStorage.setItem("isLoggedIn", "1");
+                localStorage.setItem("emp_user", JSON.stringify({
+                    emp_id: json.emp_id,
+                    emp_name: json.emp_name,
+                    designation: json.designation,
+                    email: json.email,
+                    branch_name: json.branch_name
+                }));
+
+                /* REDIRECT */
+                window.location.replace("Home.html");
+
+            } catch (err) {
+                alert("Server error");
+                console.error(err);
+            }
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,153 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Fields Group - Profile</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+    <!-- SIDE MENU -->
+    <div id="sideMenu" class="side-menu" aria-hidden="true">
+        <div class="menu-top">
+            <img src="img/Fields-Group.png" class="menu-logo" />
+            <button id="closeMenu" class="close-btn">✕</button>
+        </div>
+        <nav class="menu-list" id="menuList">
+            <a class="menu-item active" onclick="Dashboard()">Home</a>
+            <a class="menu-item" onclick="profile()">Profile</a>
+            <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+            <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+            <a class="menu-item" onclick="lead()">Lead Genration</a>
+            <a class="menu-item" onclick="leadReport()">Lead Report</a>
+            <a class="menu-item" onclick="service()">Service Enquiry</a>
+            <a class="menu-item" onclick="serviceReport()">Service Report</a>
+            <!--<a class="menu-item">Tracking</a>
+    <a class="menu-item" onclick="ExpensesVoucher()">Expenses Voucher</a>-->
+            <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+            <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+            <a class="menu-item" onclick="logout()">Log Out</a>
+        </nav>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div id="mainPage" class="page">
+
+        <header class="topbar">
+            <button id="openMenu" class="hamb">☰</button>
+        </header>
+
+        <section class="user-card">
+            <div>
+                <h3>Profile</h3>
+                <h4 hidden id="empName"></h4>
+                <small><span hidden id="empId"></span></small>
+            </div>
+        </section>
+
+        <!-- FORM -->
+        <section class="login-card">
+
+            <label> Name</label>
+            <input id="CustomerName" type="text" class="input" />
+
+            <label>Address</label>
+            <input id="Address" type="text" class="input" />
+
+            <label>Contact No</label>
+            <input id="ContactNo" class="input" maxlength="10" />
+
+            <label>Email</label>
+            <input id="Email" class="input" />
+
+            <label>Gender</label>
+            <input id="Gender" class="input" />
+
+            <label>Designation</label>
+            <input id="Designation" class="input" readonly />
+
+            <label>Department</label>
+            <input id="Department" class="input" readonly />
+
+            <label>Joining Date</label>
+            <input id="Joining_Date" class="input" readonly />
+
+            <button id="SubmitBtn" type="button">Update</button>
+
+        </section>
+
+    </div>
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <a onclick="Dashboard()">🏠</a>
+        <a onclick="alert('Profile')">👤</a>
+        <a onclick="leaveReport()">🧾</a>
+        <a onclick="alert('Settings')">⚙️</a>
+    </div>
+    <script src="cordova.js"></script>
+    <script src="js/menu.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // ★ FIXED CODE – Correct LocalStorage key
+            let user = JSON.parse(localStorage.getItem("emp_user") || "{}");
+            let Emp_ID = user.emp_id;
+
+            if (!Emp_ID) {
+                alert("User not logged in");
+                return;
+            }
+
+            loadProfile(Emp_ID);
+        });
+
+        function loadProfile(Emp_ID) {
+            fetch("https://empapp.kaizensoftware.in/api/Dashboard/Profile-Details?Emp_ID=" + Emp_ID)
+                .then(response => response.json())
+                .then(data => {
+
+                    // 🔥 FIX #1 — Handle error response
+                    if (data.status === false) {
+                        alert("API Error: " + data.error);
+                        return;
+                    }
+
+                    // 🔥 FIX #2 — Access first object from list
+                    if (!data || data.length === 0) {
+                        alert("No profile data found.");
+                        return;
+                    }
+
+                    let row = data[0];
+
+                    // Fill input placeholders or values
+                    document.getElementById("CustomerName").value = row.Emp_Name ?? "";
+                    document.getElementById("Address").value = row.ADDRESS ?? "";
+                    document.getElementById("ContactNo").value = row.Mobile ?? "";
+                    document.getElementById("Email").value = row.Email ?? "";
+                    document.getElementById("Gender").value = row.Gender ?? "";
+                    document.getElementById("Designation").value = row.Designation ?? "";
+                    document.getElementById("Department").value = row.Department ?? "";
+                    document.getElementById("Joining_Date").value = row.JOINING_DATE ?? "";
+
+                    // Optional: store hidden fields
+                    document.getElementById("empName").textContent = row.Emp_Name ?? "";
+                    document.getElementById("empId").textContent = row.Emp_ID ?? "";
+
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error loading profile!");
+                });
+        }
+
+
+    </script>
+
+
+
+</body>
+</html>

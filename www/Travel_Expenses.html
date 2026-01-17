@@ -1,0 +1,276 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Fields Group - TRAVEL</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+    <!-- SIDE MENU -->
+    <div id="sideMenu" class="side-menu" aria-hidden="true">
+        <div class="menu-top">
+            <img src="img/Fields-Group.png" class="menu-logo" />
+            <button id="closeMenu" class="close-btn">✕</button>
+        </div>
+        <nav class="menu-list" id="menuList">
+            <a class="menu-item active" onclick="Dashboard()">Home</a>
+            <a class="menu-item" onclick="profile()">Profile</a>
+            <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+            <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+
+            <a class="menu-item" onclick="lead()">Lead Genration</a>
+            <a class="menu-item" onclick="leadReport()">Lead Report</a>
+
+            <a class="menu-item" onclick="service()">Service Enquiry</a>
+            <a class="menu-item" onclick="serviceReport()">Service Report</a>
+
+            <!--<a class="menu-item">Tracking</a>
+    <a class="menu-item" onclick="ExpensesVoucher()">Expenses Voucher</a>-->
+            <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+            <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+            <a class="menu-item" onclick="logout()">Log Out</a>
+        </nav>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div id="mainPage" class="page">
+
+        <header class="topbar">
+            <button id="openMenu" class="hamb">☰</button>
+        </header>
+
+        <section class="user-card">
+            <div>
+                <h3>Travelling & Daily Allowances</h3>
+                <h4 hidden id="empName"></h4>
+                <small><span hidden id="empId"></span></small>
+            </div>
+        </section>
+
+        <!-- FORM -->
+        <section class="login-card">
+
+            <label>Mode Of Transport</label>
+            <select id="ModeOfTransport" name="ModeOfTransport" class="input">
+                <option value="">Select Mode</option>
+                <option value="Bike">Bike</option>
+                <option value="Car">Car</option>
+                <option value="Bus">Bus</option>
+                <option value="Railway">Railway</option>
+                <option value="Flight">Flight</option>
+            </select>
+
+            <label>Travel Date</label>
+            <label for="From_Date_display">(DD/MM/YYYY)</label>
+            <input id="From_Date_display" type="text" class="input" placeholder="DD/MM/YYYY" readonly />
+
+            <input id="From_Date" class="native-date" type="date" />
+
+            <label>Start KM</label>
+            <input id="StartKM" type="text" class="input" placeholder="Start KM" />
+
+            <label>Start Location</label>
+            <input id="StartLocation" class="input" placeholder="Enter Start Location" />
+
+            <label>End KM</label>
+            <input id="EndKM" class="input" placeholder="Enter End KM" />
+
+            <label>End Location</label>
+            <input id="EndLocation" class="input" placeholder="Enter End Location" />
+
+            <label>Fuel / Tickets  </label>
+            <input id="Fuel_Tickets" class="input" placeholder="0" />
+
+            <label>Toll Tax</label>
+            <input id="Toll_Tax" class="input" placeholder="0" />
+
+            <label>Food / Hotel</label>
+            <input id="Food_Hotel" class="input" placeholder="0" />
+
+            <label>Local Con. / Mis</label>
+            <input id="Local_Con" class="input" placeholder="0" />
+
+            <label>Total Amount</label>
+            <input id="Total_Amount" class="input" placeholder="0" readonly />
+
+            <label>Remarks</label>
+            <input id="Remarks" class="input" placeholder="Enter Remarks" />
+
+            <button id="SubmitBtn" type="button">Submit</button>
+
+        </section>
+
+    </div>
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <a onclick="Dashboard()">🏠</a>
+        <a onclick="alert('Profile')">👤</a>
+        <a onclick="leaveReport()">🧾</a>
+        <a onclick="alert('Settings')">⚙️</a>
+    </div>
+    <script src="js/menu.js"></script>
+    <!-- Cordova -->
+    <script>
+        (function () {
+            var s = document.createElement('script');
+            s.src = 'cordova.js';
+            s.onerror = function () { };
+            document.head.appendChild(s);
+        })();
+    </script>
+    <!-- LOCAL STORAGE USER -->
+    <script>
+        let user = null;
+        try {
+            const raw = localStorage.getItem("emp_user");
+            if (raw) user = JSON.parse(raw);
+        } catch (e) {
+            console.error("Error parsing emp_user from localStorage:", e);
+        }
+
+        if (!user || !user.emp_id) {
+            alert("No logged-in user found. Please login first.");
+        } else {
+            document.getElementById("empName").innerText = user.emp_name || "";
+            document.getElementById("empId").innerText = user.emp_id || "";
+        }
+        // ✅ ROLE BASED MENU (ONLY FIX)
+        const desig = user.designation;
+
+        // SALES MENU
+        const salesRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM- Service", "ACCOUNT EXECUTIVE"];
+        document.querySelectorAll(".sales-menu").forEach(m => {
+            m.style.display = salesRoles.includes(desig) ? "block" : "none";
+        });
+
+        // SERVICE MENU (ONLY Service Enquiry & Service Report)
+        const serviceRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM - Sales", "ACCOUNT EXECUTIVE"];
+        document.querySelectorAll(".service-menu").forEach(m => {
+            m.style.display = serviceRoles.includes(desig) ? "block" : "none";
+        });
+        // DATE HANDLING
+        const fromNative = document.getElementById("From_Date");
+        const fromDisplay = document.getElementById("From_Date_display");
+
+        function formatToDDMMYYYY(isoDate) {
+            if (!isoDate) return "";
+            const parts = isoDate.split("-");
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function setTodayFor(nativeEl, displayEl) {
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yyyy = now.getFullYear();
+            const iso = `${yyyy}-${mm}-${dd}`;
+            nativeEl.value = iso;
+            displayEl.value = formatToDDMMYYYY(iso);
+        }
+
+        setTodayFor(fromNative, fromDisplay);
+
+        fromNative.addEventListener("change", function () {
+            fromDisplay.value = formatToDDMMYYYY(fromNative.value);
+        });
+
+        function openNativePicker(displayEl, nativeEl) {
+            displayEl.addEventListener("click", function () {
+                if (typeof nativeEl.showPicker === "function") {
+                    nativeEl.showPicker();
+                } else {
+                    nativeEl.focus();
+                    nativeEl.click();
+                }
+            });
+        }
+
+        openNativePicker(fromDisplay, fromNative);
+    </script>
+
+    <!-- Submit -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("SubmitBtn").addEventListener("click", async function () {
+
+                let user = JSON.parse(localStorage.getItem("emp_user") || "{}");
+                if (!user.emp_id) {
+                    alert("User not found. Please login again.");
+                    return;
+                }
+
+                const StartKM = document.getElementById("StartKM").value.trim();
+                const EndKM = document.getElementById("EndKM").value.trim();
+
+                if (parseFloat(EndKM) < parseFloat(StartKM)) {
+                    alert("End KM cannot be less than Start KM");
+                    return;
+                }
+
+                let fd = new FormData();
+                fd.append("emp_id", user.emp_id);
+                fd.append("ModeOfTransport", document.getElementById("ModeOfTransport").value);
+                fd.append("StartKM", StartKM);
+                fd.append("StartLocation", document.getElementById("StartLocation").value);
+                fd.append("EndKM", EndKM);
+                fd.append("EndLocation", document.getElementById("EndLocation").value);
+                fd.append("Fuel_Tickets", document.getElementById("Fuel_Tickets").value);
+                fd.append("Toll_Tax", document.getElementById("Toll_Tax").value);
+                fd.append("Food_Hotel", document.getElementById("Food_Hotel").value);
+                fd.append("Local_Con", document.getElementById("Local_Con").value);
+                fd.append("Total_Amount", document.getElementById("Total_Amount").value);
+                fd.append("Remarks", document.getElementById("Remarks").value);
+                fd.append("TravelDate", document.getElementById("From_Date").value);
+
+                try {
+                    const response = await fetch(
+                        "https://empapp.kaizensoftware.in/api/TravelExpences/Add_Travel",
+                        { method: "POST", body: fd }
+                    );
+
+                    const resObj = await response.json();
+                    console.log("API Response:", resObj);
+
+                    if (resObj.status === true) {
+                        alert(resObj.message);
+                        location.reload();
+                    } else {
+                        alert(resObj.message || "Failed to save travel expense");
+                    }
+                }
+                catch (err) {
+                    console.error(err);
+                    alert("Server error. Please try again.");
+                }
+            });
+        });
+    </script>
+
+    <!-- ========================= Calculation ====================================== -->
+    <script>
+        function toNumber(val) {
+            let n = parseFloat(val);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function calculateTotal() {
+            const fuel = toNumber(document.getElementById("Fuel_Tickets").value);
+            const toll = toNumber(document.getElementById("Toll_Tax").value);
+            const food = toNumber(document.getElementById("Food_Hotel").value);
+            const local = toNumber(document.getElementById("Local_Con").value);
+
+            const total = fuel + toll + food + local;
+            document.getElementById("Total_Amount").value = total.toFixed(2);
+        }
+
+        ["Fuel_Tickets", "Toll_Tax", "Food_Hotel", "Local_Con"].forEach(id => {
+            document.getElementById(id).addEventListener("input", calculateTotal);
+        });
+    </script>
+
+
+</body>
+</html>

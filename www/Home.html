@@ -1,0 +1,580 @@
+﻿
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>Fields Group - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css" />
+    
+</head>
+
+<body>
+    <style>
+        .check-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .check-address {
+            font-size: 12px;
+            margin-top: 4px;
+            margin-bottom: 6px;
+            color: #444;
+            line-height: 1.4;
+        }
+
+        .check-datetime {
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- SIDE MENU -->
+    <div id="sideMenu" class="side-menu">
+        <div class="menu-top">
+            <img src="img/Fields-Group.png" class="menu-logo" />
+            <button id="closeMenu" class="close-btn">✕</button>
+        </div>
+
+        <nav class="menu-list">
+            <a class="menu-item active" onclick="Dashboard()">Home</a>
+            <a class="menu-item" onclick="profile()">Profile</a>
+            <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+            <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+            <a class="menu-item" onclick="lead()">Lead Genration</a>
+            <a class="menu-item" onclick="leadReport()">Lead Report</a>
+            <a class="menu-item" onclick="service()">Service Enquiry</a>
+            <a class="menu-item" onclick="serviceReport()">Service Report</a>
+            <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+            <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+            <a class="menu-item" onclick="logout()">Log Out</a>
+        </nav>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div id="mainPage" class="page">
+
+        <header class="topbar">
+            <button id="openMenu" class="hamb">☰</button>
+        </header>
+
+        <section class="user-card">
+            <img src="img/users.jpg" class="user-photo">
+            <div>
+                <h3 id="empName"></h3>
+                <p><b>Emp ID:</b> <span id="empId"></span></p>
+                <p><b>Designation:</b> <span id="designation"></span></p>
+
+                <!-- 🔥 REQUIRED FOR updateUI() — DO NOT REMOVE -->
+                <span id="showCheckIn" style="display:none;"></span>
+                <span id="showCheckOut" style="display:none;"></span>
+                <!-- 🔥 END FIX -->
+            </div>
+        </section>
+
+        <!-- CHECK IN / OUT -->
+        <section class="cards">
+            <!-- CHECK IN -->
+            <div class="check-card">
+                <div class="check-info">
+                    <strong>Check In :</strong>
+
+                    <div class="check-address" id="Checkin_address">
+                        Not Available
+                    </div>
+                    
+                    <div class="check-datetime">
+                        <span id="Checkin_date"></span> | <span id="Checkin_Time"></span>
+                    </div>
+                </div>
+
+                <button class="primary" id="btnCheckIn">Check In</button>
+            </div>
+           
+            <!-- CHECK OUT -->
+            <div class="check-card">
+                <div class="check-info">
+                    <strong>Check Out :</strong>
+                    
+                    <div class="check-address" id="Checkout_address">
+                        Not Available
+                    </div>
+                    <div class="check-datetime">
+                        <span id="Checkout_date"></span> | <span id="Checkout_Time"></span>
+                    </div>
+                </div>
+
+                <button class="primary" id="btnCheckOut" style="display:none;">Check Out</button>
+            </div>
+
+
+            <!-- MAP -->
+            <div hidden id="map" style="height:250px; margin:10px;"></div>
+
+        </section>
+
+
+    </div>
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <a onclick="Dashboard()">🏠</a>
+        <a onclick="profile()">👤</a>
+        <a onclick="alert('Reports')">🧾</a>
+        <a onclick="alert('Settings')">⚙️</a>
+    </div>
+    <script src="js/menu.js"></script>
+
+    <script>
+        /* ======= Utilities and simple routing ======= */
+        let user = null;
+
+        function formatDateTime(ts) {
+            if (!ts || ts === "undefined" || ts === "null") return "Not Available";
+            const d = new Date(Number(ts));
+            if (isNaN(d.getTime())) return "Not Available";
+            return (
+                String(d.getDate()).padStart(2, '0') + "/" +
+                String(d.getMonth() + 1).padStart(2, '0') + "/" +
+                d.getFullYear() + " " +
+                String(d.getHours()).padStart(2, '0') + ":" +
+                String(d.getMinutes()).padStart(2, '0') + ":" +
+                String(d.getSeconds()).padStart(2, '0')
+            );
+        }
+
+        function isToday(ts) {
+            if (!ts) return false;
+            const d = new Date(Number(ts));
+            const now = new Date();
+            return d.getDate() === now.getDate() &&
+                d.getMonth() === now.getMonth() &&
+                d.getFullYear() === now.getFullYear();
+        }
+
+
+
+        /* ======= Menu open/close ======= */
+        const sideMenuEl = document.getElementById("sideMenu");
+        const mainPageEl = document.getElementById("mainPage");
+        document.getElementById("openMenu").addEventListener("click", () => {
+            sideMenuEl.classList.add("open");
+            mainPageEl.classList.add("shift");
+            sideMenuEl.setAttribute("aria-hidden", "false");
+        });
+        document.getElementById("closeMenu").addEventListener("click", () => {
+            sideMenuEl.classList.remove("open");
+            mainPageEl.classList.remove("shift");
+            sideMenuEl.setAttribute("aria-hidden", "true");
+        });
+
+        /* ======= Load user and initialize ======= */
+        document.addEventListener("DOMContentLoaded", () => {
+            try {
+                user = JSON.parse(localStorage.getItem("emp_user"));
+            } catch (e) {
+                user = null;
+            }
+
+            if (!user) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            document.getElementById("empName").innerText = user.emp_name || "";
+            document.getElementById("empId").innerText = user.emp_id || "";
+            document.getElementById("designation").innerText = user.designation || "";
+
+            updateUI();
+            // 🔥 AUTO START TRACKING
+            startTrackingAfterCheckIn();
+            // ✅ FIXED LINE
+            loadAttendance(user.emp_id);
+            initMap();
+
+            FirebasePlugin.getToken(function (token) {
+                console.log("🔥 FCM Token:", token);
+
+                // SEND TOKEN TO YOUR SERVER
+                saveTokenToServer(token);
+
+            }, function (error) {
+                console.error("FCM Token Error", error);
+            });
+
+        }, false);
+
+        function saveTokenToServer(token) {
+            fetch("https://empapp.kaizensoftware.in/api/Dashboard/save-token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    EmpId: localStorage.getItem("Emp_ID"),
+                    FcmToken: token
+                })
+            });
+
+            FirebasePlugin.onMessageReceived(function (message) {
+
+                console.log("📩 Notification:", message);
+
+                if (message.tap) {
+                    // Notification clicked
+                    alert("Notification clicked: " + message.title);
+                } else {
+                    // Foreground notification
+                    alert(message.title + "\n" + message.body);
+                }
+
+            }, function (error) {
+                console.error(error);
+            });
+
+        };
+
+
+    </script>
+
+    <!--============UI UPDATE=============-->
+
+    <script>
+        function updateUI() {
+            let cin = localStorage.getItem("chkInTime");
+            let cout = localStorage.getItem("chkOutTime");
+
+            if (!isToday(cin)) {
+                cin = null;
+                cout = null;
+                localStorage.removeItem("chkInTime");
+                localStorage.removeItem("chkOutTime");
+            }
+
+            document.getElementById("showCheckIn").innerText = formatDateTime(cin);
+            document.getElementById("showCheckOut").innerText = formatDateTime(cout);
+
+            document.getElementById("btnCheckIn").style.display = cin ? "none" : "inline-block";
+            document.getElementById("btnCheckOut").style.display = (cin && !cout) ? "inline-block" : "none";
+        }
+
+    </script>
+
+    <!--============Check IN=============-->
+    <script>
+        document.getElementById("btnCheckIn").addEventListener("click", async function () {
+            try {
+                // 1️⃣ GPS
+                const loc = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 15000
+                    });
+                });
+
+                const latitude = loc.coords.latitude;
+                const longitude = loc.coords.longitude;
+                const geocoord = latitude + "," + longitude;
+
+                // 2️⃣ Reverse geocode
+                let address = "";
+                try {
+                    const geoRes = await fetch(
+                        "https://maps.googleapis.com/maps/api/geocode/json?latlng=" +
+                        geocoord +
+                        "&key=AIzaSyDGKxaSvDeDdDao8M0bNs944Es5zpo8G2I"
+                    );
+                    const geoJson = await geoRes.json();
+                    address = geoJson.results?.[0]?.formatted_address || "";
+                } catch { }
+
+                // 3️⃣ FormData
+                const fd = new FormData();
+                fd.append("emp_id", user.emp_id);
+                fd.append("emp_name", user.emp_name);
+                fd.append("job_profile", user.designation);
+                fd.append("coord", geocoord);
+                fd.append("location", address);
+
+
+                // 4️⃣ API Call
+                const response = await fetch(
+                    "https://empapp.kaizensoftware.in/api/Dashboard/checkin",
+                    {
+                        method: "POST",
+                        body: fd
+                    }
+                );
+
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch {
+                    result = {};
+                }
+
+                // 5️⃣ RESULT HANDLING (FIXED)
+                if (response.ok && result.status === true) {
+                    localStorage.setItem("chkInTime", Date.now());
+                    updateUI();
+                    alert(result.message || "Checked In Successfully");
+                } else {
+                    alert(result.message || "Check-in failed");
+                }
+
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+            // 🔥 AUTO START TRACKING
+            startTrackingAfterCheckIn();
+            loadAttendance(user.emp_id);
+        });
+    </script>
+
+    <!--============Check Out=============-->
+    <script>
+        document.getElementById("btnCheckOut").addEventListener("click", async function () {
+            try {
+                // 1️⃣ GPS
+                const loc = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 15000
+                    });
+                });
+
+                const latitude = loc.coords.latitude;
+                const longitude = loc.coords.longitude;
+                const geocoord = latitude + "," + longitude;
+
+                // 2️⃣ Reverse geocode
+                let address = "";
+                try {
+                    const geoRes = await fetch(
+                        "https://maps.googleapis.com/maps/api/geocode/json?latlng=" +
+                        geocoord +
+                        "&key=AIzaSyDGKxaSvDeDdDao8M0bNs944Es5zpo8G2I"
+                    );
+                    const geoJson = await geoRes.json();
+                    address = geoJson.results?.[0]?.formatted_address || "";
+                } catch { }
+
+                // 3️⃣ FormData
+                const fd = new FormData();
+                fd.append("emp_id", user.emp_id);
+                fd.append("coord", geocoord);
+                fd.append("location", address);
+
+
+                // 4️⃣ API Call
+                const response = await fetch(
+                    "https://empapp.kaizensoftware.in/api/Dashboard/checkout",
+                    {
+                        method: "POST",
+                        body: fd
+                    }
+                );
+
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch {
+                    result = {};
+                }
+
+                // 5️⃣ RESULT HANDLING (FIXED)
+                if (response.ok && result.status === true) {
+                    localStorage.setItem("chkOutTime", Date.now());
+                    updateUI();
+                    alert(result.message || "Checked Out Successfully");
+                } else {
+                    alert(result.message || "Check-Out failed");
+                }
+
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+            loadAttendance(user.emp_id);
+        });
+    </script>
+
+    <!--============Show Attendance (FIXED)=============-->
+    <script>
+        function loadAttendance(Emp_ID) {
+            fetch("https://empapp.kaizensoftware.in/api/Dashboard/SHOW_CHECK_IN?Emp_ID=" + Emp_ID)
+                .then(r => r.json())
+                .then(d => {
+                    if (!d || !d.length) return;
+
+                    Checkin_address.innerText = d[0].Ci_location || "Not Available";
+                    Checkout_address.innerText = d[0].Ci_location_OUT || "Not Available";
+
+                    Checkin_date.innerText = d[0].ATTENDANCE_DATE || "";
+                    Checkout_date.innerText = d[0].ATTENDANCE_DATE || "";
+
+                    function formatTime(timeStr) {
+                        if (!timeStr) return "";
+
+                        let [hh, mm] = timeStr.split(":");
+                        let h = parseInt(hh, 10);
+                        let ampm = h >= 12 ? "PM" : "AM";
+                        h = h % 12 || 12;
+
+                        return h.toString().padStart(2, '0') + ":" + mm + " " + ampm;
+                    }
+
+                    Checkin_Time.innerText = formatTime(d[0].Check_in);
+                    Checkout_Time.innerText = formatTime(d[0].Check_out);
+                });
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!--============Tracking=============-->
+    <script>
+        let trackingInterval = null;
+
+        document.addEventListener("deviceready", function () {
+
+            console.log("✅ Device ready");
+
+            if (!cordova?.plugins?.backgroundMode) {
+                console.error("❌ BackgroundMode plugin missing");
+                return;
+            }
+
+            cordova.plugins.backgroundMode.enable();
+            cordova.plugins.backgroundMode.setDefaults({
+                title: "Employee Tracking",
+                text: "Tracking active",
+                silent: false
+            });
+
+            startTrackingAfterCheckIn();
+
+            document.addEventListener("resume", restartTracking);
+            document.addEventListener("visibilitychange", restartTracking);
+
+            cordova.plugins.backgroundMode.on('activate', function () {
+                console.log("🔄 Background activated");
+                restartTracking();
+            });
+        });
+
+        function restartTracking() {
+            stopTracking();
+            startTrackingAfterCheckIn();
+        }
+
+        function startTrackingAfterCheckIn() {
+
+            if (!localStorage.getItem("chkInTime")) {
+                console.log("❌ Not checked-in");
+                return;
+            }
+
+            if (trackingInterval !== null) {
+                console.log("ℹ️ Tracking already running");
+                return;
+            }
+
+            console.log("▶️ Tracking started");
+
+            trackingInterval = setInterval(trackOnce, 60000); // every 1 minute
+            trackOnce(); // immediate first hit
+        }
+
+        async function trackOnce() {
+
+            try {
+                navigator.geolocation.getCurrentPosition(async function (pos) {
+
+                    const user = JSON.parse(localStorage.getItem("emp_user"));
+                    if (!user?.emp_id) return;
+
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+
+                    updateRoute(lat, lng); // ✅ FIX
+
+                    let address = "";
+                    try {
+                        const geoRes = await fetch(
+                            "https://maps.googleapis.com/maps/api/geocode/json?latlng=" +
+                            lat + "," + lng +
+                            "&key=AIzaSyDGKxaSvDeDdDao8M0bNs944Es5zpo8G2I"
+                        );
+                        const geoJson = await geoRes.json();
+                        address = geoJson.results?.[0]?.formatted_address || "";
+                    } catch { }
+
+                    const fd = new FormData();
+                    fd.append("emp_id", user.emp_id);
+                    fd.append("latitude", lat);
+                    fd.append("longitude", lng);
+                    fd.append("location", address);
+
+                    await fetch(
+                        "https://empapp.kaizensoftware.in/api/Dashboard/trackingsave",
+                        { method: "POST", body: fd }
+                    );
+
+                }, function (err) {
+                    console.error("GPS error:", err.message);
+                }, {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 30000
+                });
+
+            } catch (err) {
+                console.error("Tracking error:", err);
+            }
+        }
+        function stopTracking() {
+            if (trackingInterval !== null) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+                console.log("🛑 Tracking stopped");
+            }
+        }
+    </script>
+
+    <!--LIVE ROUTE DRAWING SCRIPT-->
+    <script>
+        let map = null;
+        let polyline = null;
+        let routeCoords = [];
+
+        function initMap() {
+            if (map) return;
+
+            map = L.map('map').setView([20.5937, 78.9629], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            polyline = L.polyline([], {
+                color: 'blue',
+                weight: 5
+            }).addTo(map);
+        }
+
+        function updateRoute(lat, lng) {
+            if (!map || !polyline) return;
+
+            routeCoords.push([lat, lng]);
+            polyline.setLatLngs(routeCoords);
+            map.setView([lat, lng], 17);
+        }
+
+        function clearRoute() {
+            routeCoords = [];
+            if (polyline) polyline.setLatLngs([]);
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,254 @@
+/* common */
+body {
+    margin: 0;
+    color: #222;
+    font-family: Arial, sans-serif;
+    background: #f6fafc;
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+img {
+    max-width: 100%;
+}
+
+
+/* Login card */
+.login-card {
+    max-width: 380px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 26px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    text-align: center;
+}
+
+
+    .login-card .logo {
+        width: 180px;
+        margin-bottom: 8px;
+    }
+
+    .login-card button {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        background: #5b8cff;
+        color: #fff;
+        border: none;
+        font-size: 18px;
+        margin-top: 10px;
+    }
+
+    .login-card a {
+        display: block;
+        margin-top: 10px;
+        color: #5b8cff;
+        text-decoration: none;
+    }
+
+    .login-card input {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        box-sizing: border-box;
+    }
+
+    .login-card .primary {
+        width: 100%;
+        padding: 12px;
+        background: #4f86ff;
+        color: #fff;
+        border: 0;
+        border-radius: 10px;
+        font-size: 18px;
+    }
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+    .password-wrapper input {
+        width: 100%;
+        padding-right: 40px; /* space for eye icon */
+        height: 40px;
+        box-sizing: border-box;
+    }
+
+.toggle-eye {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 20px;
+}
+/* Side menu */
+.side-menu {
+    position: fixed;
+    left: -320px;
+    top: 0;
+    width: 280px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+    transition: left .25s;
+    padding: 20px;
+    z-index: 50;
+}
+
+.menu-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.menu-logo {
+    width: 120px
+}
+
+.menu-list {
+    margin-top: 18px;
+}
+
+.menu-item {
+    display: block;
+    padding: 14px 10px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #222;
+    margin-bottom: 6px;
+    font-size: 18px;
+}
+
+    .menu-item.active {
+        background: #6e98ff;
+        color: #fff;
+    }
+
+/* page content */
+.page {
+    padding-bottom: 80px;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #fff;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+
+.hamb {
+    font-size: 20px;
+    background: none;
+    border: none;
+}
+
+.user-card {
+    background: #628AFF;
+    color: #fff;
+    margin: 16px;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    box-shadow: 0 8px 20px rgba(50,70,140,0.06);
+}
+
+.user-photo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* check cards */
+.card {
+    width: 360px;
+    padding: 28px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.check-card {
+    background: #e8efff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px;
+    margin: 10px 0;
+    border-radius: 8px;
+}
+
+.primary {
+    background: #4f86ff;
+    color: #fff;
+    border: 0;
+    padding: 10px 20px;
+    border-radius: 12px;
+}
+
+/* follow up */
+.followup {
+    margin: 18px;
+    background: #fff;
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+}
+
+.chips {
+    background: #fff;
+    border-radius: 20px;
+    padding: 10px;
+    display: inline-block;
+    border: 1px solid #eee;
+}
+.check-info {
+    width: 100%;
+}
+
+.check-address {
+    font-size: 13px;
+    color: #333;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.check-datetime {
+    font-size: 13px;
+    color: #555;
+    margin-top: 4px;
+    white-space: nowrap;
+}
+
+/* bottom nav */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+}
+
+    .bottom-nav a {
+        font-size: 22px;
+        color: #2f4ea4;
+    }

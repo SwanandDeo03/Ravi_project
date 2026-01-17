@@ -1,0 +1,308 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Fields Group - Service Report</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+    <!-- ====================== USER LOCALSTORAGE CODE ADDED ======================= -->
+    <script>
+        let user = null;
+        try {
+            const raw = localStorage.getItem("emp_user");
+            if (raw) user = JSON.parse(raw);
+        } catch (e) {
+            console.error("Error parsing emp_user from localStorage:", e);
+        }
+
+        if (!user || !user.emp_id) {
+            alert("No logged-in user found. Please login first.");
+            console.warn("emp_user is missing or malformed:", user);
+        } else {
+            document.getElementById("empName").innerText = user.emp_name || "";
+            document.getElementById("empId").innerText = user.emp_id || "";
+        }
+    </script>
+    <!-- ========================================================================== -->
+    <!-- SIDE MENU -->
+    <div id="sideMenu" class="side-menu" aria-hidden="true">
+        <div class="menu-top">
+            <img src="img/Fields-Group.png" class="menu-logo" />
+            <button id="closeMenu" class="close-btn" aria-label="Close menu">✕</button>
+        </div>
+
+        <nav class="menu-list" id="menuList">
+            <a class="menu-item active" onclick="Dashboard()">Home</a>
+            <a class="menu-item" onclick="profile()">Profile</a>
+            <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+            <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+
+            <a class="menu-item" onclick="lead()">Lead Genration</a>
+            <a class="menu-item" onclick="leadReport()">Lead Report</a>
+
+            <a class="menu-item" onclick="service()">Service Enquiry</a>
+            <a class="menu-item" onclick="serviceReport()">Service Report</a>
+
+            <!--<a class="menu-item">Tracking</a>
+            <a class="menu-item" onclick="ExpensesVoucher()">Expenses Voucher</a>-->
+            <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+            <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+            <a class="menu-item" onclick="logout()">Log Out</a>
+        </nav>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div id="mainPage" class="page">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <button id="openMenu" class="hamb" aria-label="Open menu">☰</button>
+            <div style="flex:1"></div>
+        </header>
+
+        <!-- USER CARD -->
+        <section class="user-card" aria-label="user card">
+            <div>
+                <h3>Service Report</h3>
+                <h4 hidden id="empName"></h4>
+                <small><span hidden id="empId"></span></small>
+            </div>
+        </section>
+
+        <section class="login-card">
+            <div id="ServiceReportContainer"></div>
+        </section>
+
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav" role="navigation" aria-label="bottom nav">
+        <a onclick="Dashboard()">🏠</a>
+        <a onclick="alert('Profile clicked')">👤</a>
+        <a onclick="alert('Reports')">🧾</a>
+        <a onclick="alert('Settings')">⚙️</a>
+    </div>
+
+    <script src="cordova.js"></script>
+    <script src="js/menu.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // ★ FIXED CODE – Correct LocalStorage key
+            let user = JSON.parse(localStorage.getItem("emp_user") || "{}");
+            let Emp_ID = user.emp_id;
+
+            if (!Emp_ID) {
+                alert("User not logged in");
+                return;
+            }
+            // ✅ ROLE BASED MENU (ONLY FIX)
+            const desig = user.designation;
+
+            // SALES MENU
+            const salesRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM- Service", "ACCOUNT EXECUTIVE"];
+            document.querySelectorAll(".sales-menu").forEach(m => {
+                m.style.display = salesRoles.includes(desig) ? "block" : "none";
+            });
+
+            // SERVICE MENU (ONLY Service Enquiry & Service Report)
+            const serviceRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM - Sales", "ACCOUNT EXECUTIVE"];
+            document.querySelectorAll(".service-menu").forEach(m => {
+                m.style.display = serviceRoles.includes(desig) ? "block" : "none";
+            });
+
+            loadServiceReport(Emp_ID);
+        });
+
+        function loadServiceReport(Emp_ID) {
+
+            fetch("https://empapp.kaizensoftware.in/api/Service/service-report?Emp_ID=" + Emp_ID)
+                .then(response => response.json())
+                .then(data => {
+
+                    if (data.status === false) {
+                        alert("API Error: " + data.error);
+                        return;
+                    }
+
+                    let html = "";
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        html = `<p style="text-align:center;color:red">No Service Report Found</p>`;
+                    } else {
+
+                        data.forEach((row, index) => {
+
+                            html += `
+                                        <div class="table-responsive" style="margin-bottom:12px">
+                                            <table class="table" style="width:100%">
+                                                <tbody>
+                                                    <tr>
+                                                        <td colspan="2" style="font-size:medium">
+                                                            <strong> ${row.SERVICE_ID ?? ""}</strong>
+                                                            <br>
+                                                            <strong>Name:</strong> ${row.CUSTOMER_NAME ?? ""}
+                                                            <br>${row.ADDRESS ?? ""}, ${row.CONTACT_NO ?? ""}
+                                                            <br>${row.EMAIL ?? ""}
+                                                            <br>
+                                                            <strong>Model:</strong> ${row.MODEL_NAME ?? ""}
+                                                            <br>
+                                                            <strong>Service:</strong> ${row.SERVICE_NAME ?? ""}
+                                                            <br>
+                                                            <strong>Create Date:</strong> ${row.FOLLOWUP_DATE ?? ""}
+                                                            <br>
+                                                            <strong>Visit Date:</strong> ${row.From_Date ?? ""} | ${row.To_Date ?? ""}
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td colspan="2" style="font-size:medium">
+                                                            <strong>Remarks:</strong> ${row.REMARKS ?? ""}
+
+                                                            <div class="toggle-group">
+                                                                <button type="button"
+                                                                    class="toggle-btn toggle-accept"
+                                                                    onclick="acceptService('${row.SERVICE_ID}', ${index})">
+                                                                    Accept
+                                                                </button>
+
+                                                                <button type="button"
+                                                                    class="toggle-btn toggle-reject"
+                                                                    onclick="toggleStatus(${index}, 'reject')">
+                                                                    Reject
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>`;
+                        });
+                    }
+
+                    document.getElementById("ServiceReportContainer").innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error loading Service Report!");
+                });
+        }
+
+    </script>
+    <style>
+        /* ===== Toggle Button Styles ===== */
+        .toggle-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .toggle-btn {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            font-weight: bold;
+            background: #f1f1f1;
+            transition: all 0.3s ease;
+        }
+
+        /* Accept Toggle */
+        .toggle-accept.active {
+            background: #0d6efd;
+            color: #fff;
+            border-color: #0d6efd;
+        }
+
+        /* Reject Toggle */
+        .toggle-reject.active {
+            background: #dc3545;
+            color: #fff;
+            border-color: #dc3545;
+        }
+    </style>
+    <script>
+        function toggleStatus(index, type) {
+
+            const container = document.getElementById("ServiceReportContainer");
+            const blocks = container.querySelectorAll(".table-responsive");
+
+            const currentBlock = blocks[index];
+
+            const acceptBtn = currentBlock.querySelector(".toggle-accept");
+            const rejectBtn = currentBlock.querySelector(".toggle-reject");
+
+            if (type === "accept") {
+                acceptBtn.classList.add("active");
+                rejectBtn.classList.remove("active");
+            }
+
+            if (type === "reject") {
+                rejectBtn.classList.add("active");
+                acceptBtn.classList.remove("active");
+            }
+
+            console.log("Row:", index, "Status:", type);
+        }
+    </script>
+
+    <!-- ====================== ACCEPTS BUTTON ====================== -->
+    <script>
+        async function acceptService(serviceId, index) {
+
+            let user = JSON.parse(localStorage.getItem("emp_user") || "{}");
+
+            if (!user.emp_id || !serviceId) {
+                alert("Invalid user or service");
+                return;
+            }
+
+            let fd = new FormData();
+            fd.append("emp_id", user.emp_id);
+            fd.append("SERVICE_ID", serviceId);
+            fd.append("REASON_STATUS", "Accepts");
+
+            try {
+                let response = await fetch(
+                    "https://empapp.kaizensoftware.in/api/Service/Update_Service",
+                    {
+                        method: "POST",
+                        body: fd
+                    }
+                );
+
+                // 🔥 IMPORTANT LOG
+                console.log("HTTP STATUS:", response.status);
+
+                let text = await response.text(); // 👈 DO NOT DIRECTLY JSON
+                console.log("RAW RESPONSE:", text);
+
+                let json;
+                try {
+                    json = JSON.parse(text);
+                } catch {
+                    throw new Error("Invalid JSON response from server");
+                }
+
+                if (json.status === true) {
+                    alert(json.message || "Service Accepted");
+                    toggleStatus(index, "accept");
+                } else {
+                    alert("Failed: " + (json.message || "Unknown server error"));
+                }
+
+            } catch (err) {
+                console.error("ACCEPT ERROR:", err);
+                alert("Server error while accepting service\n" + err.message);
+            }
+        }
+    </script>
+
+
+
+</body>
+</html>

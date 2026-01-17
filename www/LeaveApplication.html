@@ -1,0 +1,290 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Fields Group - Login</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <!-- SIDE MENU -->
+    <div id="sideMenu" class="side-menu" aria-hidden="true">
+        <div class="menu-top">
+            <img src="img/Fields-Group.png" class="menu-logo" />
+            <button id="closeMenu" class="close-btn" aria-label="Close menu">✕</button>
+        </div>
+
+        <nav class="menu-list" id="menuList">
+            <a class="menu-item active" onclick="Dashboard()">Home</a>
+            <a class="menu-item" onclick="profile()">Profile</a>
+            <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+            <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+
+            <a class="menu-item" onclick="lead()">Lead Genration</a>
+            <a class="menu-item" onclick="leadReport()">Lead Report</a>
+
+            <a class="menu-item" onclick="service()">Service Enquiry</a>
+            <a class="menu-item" onclick="serviceReport()">Service Report</a>
+
+            <!--<a class="menu-item">Tracking</a>
+    <a class="menu-item" onclick="ExpensesVoucher()">Expenses Voucher</a>-->
+            <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+            <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+            <a class="menu-item" onclick="logout()">Log Out</a>
+        </nav>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div id="mainPage" class="page">
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <button id="openMenu" class="hamb" aria-label="Open menu">☰</button>
+        </header>
+
+        <!-- USER CARD -->
+        <section class="user-card" aria-label="user card">
+            <div>
+                <h3>Leave Application</h3>
+                <h4 hidden id="empName"></h4>
+                <small> <span hidden id="empId"></span></small>
+            </div>
+        </section>
+
+        <!-- FORM -->
+        <section class="login-card" aria-label="leave form">
+            <label for="From_Date_display">From Date (DD/MM/YYYY)</label>
+            <input id="From_Date_display" type="text" class="input" placeholder="DD/MM/YYYY" readonly />
+
+            <input id="From_Date" class="native-date" type="date" />
+
+            <label for="To_Date_display">To Date (DD/MM/YYYY)</label>
+            <input id="To_Date_display" type="text" class="input" placeholder="DD/MM/YYYY" readonly />
+            <input id="To_Date" class="native-date" type="date" />
+
+            <label>Leave Type</label>
+            <div style="display:flex; gap:15px;">
+                <label><input type="radio" name="LeaveType" value="Full Day" checked> Full Day</label>
+                <label><input type="radio" name="LeaveType" value="Half Day"> Half Day</label>
+                <!--<label><input type="radio" name="LeaveType" value="Short Leave"> Short Leave</label>-->
+            </div>
+            </br>
+            <label for="Reasons">Reasons</label>
+            <input id="Reasons" class="input" placeholder="Enter Reasons" />
+
+            <button id="Submit" type="button">Submit</button>
+        </section>
+
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <a onclick="Dashboard()">🏠</a>
+        <a onclick="alert('Profile')">👤</a>
+        <a onclick="leaveReport()">🧾</a>
+        <a onclick="alert('Settings')">⚙️</a>
+    </div>
+
+    <!-- Auto-load Cordova -->
+    <script>
+        (function () {
+            var s = document.createElement('script');
+            s.src = 'cordova.js';
+            document.head.appendChild(s);
+        })();
+    </script>
+
+    <!-- MENU JS -->
+    <script src="js/menu.js"></script>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // --- USER CHECK (example) ---
+            let user = null;
+            try {
+                const raw = localStorage.getItem("emp_user");
+                if (raw) user = JSON.parse(raw);
+            } catch (e) {
+                console.error("Error parsing emp_user from localStorage:", e);
+            }
+
+            // if no user, show friendly message / redirect to login
+            if (!user || !user.emp_id) {
+                // Replace this behaviour with your app's flow (redirect to login etc.)
+                alert("No logged-in user found. Please login first.");
+                console.warn("emp_user is missing or malformed in localStorage:", user);
+                // Optionally: window.location.href = "login.html";
+                return;
+            }
+
+            // SHOW EMPLOYEE NAME & ID
+            document.getElementById("empName").innerText = user.emp_name || "";
+            document.getElementById("empId").innerText = user.emp_id || "";
+
+            // ✅ ROLE BASED MENU (ONLY FIX)
+            const desig = user.designation;
+
+            // SALES MENU
+            const salesRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM- Service", "ACCOUNT EXECUTIVE"];
+            document.querySelectorAll(".sales-menu").forEach(m => {
+                m.style.display = salesRoles.includes(desig) ? "block" : "none";
+            });
+
+            // SERVICE MENU (ONLY Service Enquiry & Service Report)
+            const serviceRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM - Sales", "ACCOUNT EXECUTIVE"];
+            document.querySelectorAll(".service-menu").forEach(m => {
+                m.style.display = serviceRoles.includes(desig) ? "block" : "none";
+            });
+
+
+            // API endpoint (update to your production URL)
+            const API = "https://empapp.kaizensoftware.in/api/Leaveapply/Add_Leave_Application";
+
+            // elements
+            const fromNative = document.getElementById("From_Date");
+            const toNative = document.getElementById("To_Date");
+            const fromDisplay = document.getElementById("From_Date_display");
+            const toDisplay = document.getElementById("To_Date_display");
+            const reasonsEl = document.getElementById("Reasons");
+            const leavetypel = document.getElementById("LeaveType");
+
+            function formatToDDMMYYYY(isoDate) {
+                if (!isoDate) return "";
+                const parts = isoDate.split("-");
+                if (parts.length !== 3) return isoDate;
+                return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+            }
+
+            function setTodayFor(idNative, idDisplay) {
+                const today = new Date();
+                const d = String(today.getDate()).padStart(2, '0');
+                const m = String(today.getMonth() + 1).padStart(2, '0');
+                const y = today.getFullYear();
+                const iso = `${y}-${m}-${d}`; // YYYY-MM-DD (native)
+                idNative.value = iso;
+                idDisplay.value = formatToDDMMYYYY(iso);
+            }
+
+            // initialize
+            setTodayFor(fromNative, fromDisplay);
+            setTodayFor(toNative, toDisplay);
+
+            fromNative.addEventListener("change", function () {
+                fromDisplay.value = formatToDDMMYYYY(fromNative.value);
+            });
+            toNative.addEventListener("change", function () {
+                toDisplay.value = formatToDDMMYYYY(toNative.value);
+            });
+
+            function openNativePicker(displayEl, nativeEl) {
+                displayEl.addEventListener("click", function () {
+                    if (typeof nativeEl.showPicker === "function") {
+                        nativeEl.showPicker();
+                    } else {
+                        nativeEl.focus();
+                        nativeEl.click();
+                    }
+                });
+
+                displayEl.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (typeof nativeEl.showPicker === "function") nativeEl.showPicker();
+                        else { nativeEl.focus(); nativeEl.click(); }
+                    }
+                });
+            }
+
+            openNativePicker(fromDisplay, fromNative);
+            openNativePicker(toDisplay, toNative);
+
+            function getSelectedLeaveType() {
+                const checked = document.querySelector('input[name="LeaveType"]:checked');
+                return checked ? checked.value : "";
+            }
+            // SUBMIT handler
+            document.getElementById("Submit").addEventListener("click", async function () {
+                try {
+                    const fromISO = fromNative.value; // YYYY-MM-DD
+                    const toISO = toNative.value;
+                    const reason = reasonsEl.value && reasonsEl.value.trim(); 
+                    const leavetype = getSelectedLeaveType();
+
+                    if (!fromISO || !toISO || !reason || !leavetype) {
+                        alert("Please fill all fields.");
+                        return;
+                    }
+
+                    // date validation
+                    if (new Date(fromISO) > new Date(toISO)) {
+                        alert("From Date cannot be greater than To Date.");
+                        return;
+                    }
+
+                    // ensure emp_id numeric
+                    const empId = user.emp_id;
+                    if (!empId || isNaN(empId)) {
+                        alert("Employee ID missing or invalid. Please login again.");
+                        console.error("Invalid emp_id:", empId);
+                        return;
+                    }
+
+                    const bodyData = {
+                        emp_id: String(empId),
+                        from_date: fromISO,   // YYYY-MM-DD
+                        to_date: toISO,
+                        reason: reason,
+                        leavetype: leavetype
+                    };
+
+                    // send
+                    const response = await fetch(API, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(bodyData)
+                    });
+
+                    // Attempt to parse JSON safely
+                    const contentType = response.headers.get("content-type") || "";
+                    let result = null;
+                    if (contentType.indexOf("application/json") !== -1) {
+                        result = await response.json();
+                    } else {
+                        // not JSON - fallback to text for debugging
+                        const text = await response.text();
+                        console.error("Non-JSON response from server:", text);
+                        alert("Server returned a non-JSON response. See console for details.");
+                        return;
+                    }
+
+                    // If response is HTTP OK
+                    if (response.ok) {
+                        if (result && result.status === true) {
+                            alert(result.message || "Leave Application Submitted Successfully!");
+                            // optional: clear form or redirect
+                            setTimeout(() => {
+                                window.location.href = "Home.html";
+                            }, 1500);
+                        } else {
+                            // server responded 200 but status flag not true
+                            const msg = (result && (result.message || result.out_msg || result.OUT_MSG)) || "Unknown server response";
+                            alert("Error: " + msg);
+                            console.warn("Server response:", result);
+                        }
+                    } else {
+                        // non-2xx HTTP status
+                        const msg = (result && (result.message || result.error || result.out_msg || result.OUT_MSG)) || `HTTP ${response.status}`;
+                        alert("Error: " + msg);
+                        console.error("Server error response:", result);
+                    }
+                } catch (err) {
+                    console.error("Client error when submitting leave:", err);
+                    alert("Network or client error. Check console for details.");
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

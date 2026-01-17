@@ -1,0 +1,253 @@
+﻿    <!doctype html>
+    <html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+        <title>Fields Group - Service</title>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+
+    <body>
+
+        <!-- SIDE MENU -->
+        <div id="sideMenu" class="side-menu" aria-hidden="true">
+            <div class="menu-top">
+                <img src="img/Fields-Group.png" class="menu-logo" />
+                <button id="closeMenu" class="close-btn">✕</button>
+            </div>
+            <nav class="menu-list" id="menuList">
+                <a class="menu-item active" onclick="Dashboard()">Home</a>
+                <a class="menu-item" onclick="profile()">Profile</a>
+                <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+                <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+
+                <a class="menu-item" onclick="lead()">Lead Genration</a>
+                <a class="menu-item" onclick="leadReport()">Lead Report</a>
+
+                <a class="menu-item" onclick="service()">Service Enquiry</a>
+                <a class="menu-item" onclick="serviceReport()">Service Report</a>
+
+                <!--<a class="menu-item">Tracking</a>
+            <a class="menu-item" onclick="ExpensesVoucher()">Expenses Voucher</a>-->
+                <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+                <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+                <a class="menu-item" onclick="logout()">Log Out</a>
+            </nav>
+        </div>
+
+        <!-- MAIN PAGE -->
+        <div id="mainPage" class="page">
+
+            <header class="topbar">
+                <button id="openMenu" class="hamb">☰</button>
+            </header>
+
+            <section class="user-card">
+                <div>
+                    <h3>Service Enquiry</h3>
+                    <h4 hidden id="empName"></h4>
+                    <small><span hidden id="empId"></span></small>
+                </div>
+            </section>
+
+            <!-- FORM -->
+            <section class="login-card">
+                <label>Call Id</label>
+                <input id="CallId" type="text" class="input" placeholder="Service Call Id" />
+
+                <label style="color:red">Customer Name</label>
+                <input id="CustomerName" type="text" class="input" placeholder="Customer Name" />
+
+                <label style="color:red">Address</label>
+                <input id="Address" type="text" class="input" placeholder="Address" />
+
+                <label style="color:red">Contact No</label>
+                <input id="ContactNo" class="input" placeholder="Enter Contact No" maxlength="10" />
+
+                <label style="color:red">Email</label>
+                <input id="Email" class="input" placeholder="Enter Email" />
+
+                <label>GSTN / PAN</label>
+                <input id="GstnNo" class="input" placeholder="Enter GSTN / PAN" maxlength="18" />
+
+                <label for="Services">Lead Services</label>
+                <select id="Services" name="Services" class="input">
+                    <option value="">Select Service</option>
+                    <option value="Paid / Amount">Paid / Amount</option>
+                    <option value="Good Will">Good Will</option>
+                    <option value="Campaining">Campaining</option>
+                    <option value="Warrenty">Warrenty</option>
+                    <option value="Schedule Maintenance">Schedule Maintenance</option>
+                    <option value="Break Down">Break Down</option>
+                </select>
+
+                <label>Machine Sr. No.</label>
+                <input id="MachineNo" class="input" placeholder="Enter Machine Sr. No." />
+
+                <label>Parts Required</label>
+                <input id="Parts_Required" class="input" placeholder="Enter Parts Required" />
+
+                <label>Model</label>
+                <input list="ModelList" id="ModelProfile" class="input" autocomplete="off" />
+                <datalist id="ModelList"></datalist>
+
+                <label for="QuotationSubmitted">Quotation Submitted</label>
+                <select id="QuotationSubmitted" name="QuotationSubmitted" class="input">
+                    <option value="">Select Quotation</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+
+                <label>Remarks</label>
+                <input id="Remarks" class="input" placeholder="Enter Remarks" />
+
+                <button id="SubmitBtn" type="button">Submit</button>
+
+            </section>
+
+        </div>
+        <!-- BOTTOM NAV -->
+        <div class="bottom-nav">
+            <a onclick="Dashboard()">🏠</a>
+            <a onclick="alert('Profile')">👤</a>
+            <a onclick="leaveReport()">🧾</a>
+            <a onclick="alert('Settings')">⚙️</a>
+        </div>
+        <script src="js/menu.js"></script>
+
+        <script>
+            (function () {
+                var s = document.createElement('script');
+                s.src = 'cordova.js';
+                s.onerror = function () { };
+                document.head.appendChild(s);
+            })();
+        </script>
+
+        <!-- LOCAL STORAGE USER -->
+        <script>
+            let user = null;
+            try {
+                const raw = localStorage.getItem("emp_user");
+                if (raw) user = JSON.parse(raw);
+            } catch (e) {
+                console.error("Error parsing emp_user from localStorage:", e);
+            }
+
+            if (!user || !user.emp_id) {
+                alert("No logged-in user found. Please login first.");
+            } else {
+                document.getElementById("empName").innerText = user.emp_name || "";
+                document.getElementById("empId").innerText = user.emp_id || "";
+            }
+            // ✅ ROLE BASED MENU (ONLY FIX)
+            const desig = user.designation;
+
+            // SALES MENU
+            const salesRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM- Service", "ACCOUNT EXECUTIVE"];
+            document.querySelectorAll(".sales-menu").forEach(m => {
+                m.style.display = salesRoles.includes(desig) ? "block" : "none";
+            });
+
+            // SERVICE MENU (ONLY Service Enquiry & Service Report)
+            const serviceRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM - Sales", "ACCOUNT EXECUTIVE"];
+            document.querySelectorAll(".service-menu").forEach(m => {
+                m.style.display = serviceRoles.includes(desig) ? "block" : "none";
+            });
+
+
+        </script>
+
+        <!-- LOAD LISTS (unchanged) -->
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                fetch("https://empapp.kaizensoftware.in/api/LeadApi/Model")
+                    .then(r => r.json())
+                    .then(data => {
+                        let list = document.getElementById("ModelList");
+                        list.innerHTML = "";
+                        data.forEach(i => {
+                            if (i.PROJECT_NAME) {
+                                let opt = document.createElement("option");
+                                opt.value = i.PROJECT_NAME;
+                                list.appendChild(opt);
+                            }
+                        });
+                    }).catch(() => { });
+            });
+        </script>
+
+        <!-- ====================== FIXED SUBMIT BUTTON ====================== -->
+        <script>
+            window.onload = function () {
+
+                document.getElementById("SubmitBtn").onclick = async function () {
+
+                    let user = JSON.parse(localStorage.getItem("emp_user") || "{}");
+
+                    if (!user.emp_id) {
+                        alert("Employee not logged in");
+                        return;
+                    }
+
+                    let fd = new FormData();
+
+                    fd.append("emp_id", user.emp_id);
+                    fd.append("CustomerName", document.getElementById("CustomerName").value);
+                    fd.append("Address", document.getElementById("Address").value);
+                    fd.append("ContactNo", document.getElementById("ContactNo").value);
+                    fd.append("Email", document.getElementById("Email").value);
+                    fd.append("GSTN_NO", document.getElementById("GstnNo").value);
+                    fd.append("Services", document.getElementById("Services").value);
+                    fd.append("ModelName", document.getElementById("ModelProfile").value);
+                    fd.append("MachineNo", document.getElementById("MachineNo").value);
+                    fd.append("Parts_Required", document.getElementById("Parts_Required").value);
+                    fd.append("QuotationSubmitted", document.getElementById("QuotationSubmitted").value);
+                    fd.append("Remarks", document.getElementById("Remarks").value);
+                    fd.append("CallId", document.getElementById("CallId").value);
+
+                    try {
+                        let response = await fetch(
+                            "https://empapp.kaizensoftware.in/api/Service/Add_Service",
+                            {
+                                method: "POST",
+                                body: fd
+                            }
+                        );
+
+                        if (!response.ok) {
+                            alert("Server Error");
+                            return;
+                        }
+
+                        let json = await response.json();
+
+                        // 🔒 SAFETY CHECK
+                        if (typeof json !== "object") {
+                            alert("Invalid server response");
+                            console.error(json);
+                            return;
+                        }
+
+                        if (json.status === true) {
+                            alert(json.message || "SUCCESS");
+                            setTimeout(() => {
+                                window.location.href = "Home.html";
+                            }, 1200);
+                        } else {
+                            alert("FAILED : " + (json.message || "UNKNOWN ERROR"));
+                        }
+
+                    } catch (err) {
+                        alert("Network / Server Error");
+                        console.error(err);
+                    }
+                };
+            };
+        </script>
+
+
+
+    </body>
+    </html>

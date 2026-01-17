@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.fields.login"
+        version="1.0.0"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<name>Fields Group</name>
+
+	<description>Sample Apache Cordova App</description>
+
+	<author email="dev@cordova.apache.org" href="https://cordova.apache.org">
+		Apache Cordova Team
+	</author>
+
+	<!-- Plugins -->
+	<plugin name="cordova-plugin-geolocation" source="npm" />
+
+	<!-- Preferences -->
+	<preference name="AndroidInsecureFileModeEnabled" value="true" />
+	<preference name="AndroidGeolocationPermission" value="true" />
+
+	<!-- App Entry -->
+	<content src="index.html" />
+
+	<!-- Network -->
+	<allow-intent href="http://*/*" />
+	<allow-intent href="https://*/*" />
+
+	<!-- App Icon -->
+	<icon src="resources/icon.png" />
+
+	<!-- Android Permissions -->
+	<platform name="android">
+		<config-file parent="/manifest" target="AndroidManifest.xml">
+			<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+			<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+			<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+			<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+			<uses-permission android:name="android.permission.USE_BIOMETRIC" />
+			<uses-permission android:name="android.permission.CAMERA" />
+			<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+			<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+		</config-file>
+	</platform>
+	
+	<system.web>
+		<httpRuntime maxRequestLength="20480" />
+	</system.web>
+
+	<system.webServer>
+		<security>
+			<requestFiltering>
+				<requestLimits maxAllowedContentLength="20971520" />
+			</requestFiltering>
+		</security>
+	</system.webServer>
+
+</widget>

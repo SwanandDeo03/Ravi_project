@@ -1,0 +1,176 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Fields Group - Travel Report</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+    <!-- ====================== USER LOCALSTORAGE CODE ADDED ======================= -->
+    <script>
+        let user = null;
+        try {
+            const raw = localStorage.getItem("emp_user");
+            if (raw) user = JSON.parse(raw);
+        } catch (e) {
+            console.error("Error parsing emp_user from localStorage:", e);
+        }
+
+        if (!user || !user.emp_id) {
+            alert("No logged-in user found. Please login first.");
+            console.warn("emp_user is missing or malformed:", user);
+        } else {
+            document.getElementById("empName").innerText = user.emp_name || "";
+            document.getElementById("empId").innerText = user.emp_id || "";
+        }
+    </script>
+    <!-- ========================================================================== -->
+    <!-- SIDE MENU -->
+    <div id="sideMenu" class="side-menu" aria-hidden="true">
+        <div class="menu-top">
+            <img src="img/Fields-Group.png" class="menu-logo" />
+            <button id="closeMenu" class="close-btn" aria-label="Close menu">✕</button>
+        </div>
+
+        <nav class="menu-list" id="menuList">
+            <a class="menu-item active" onclick="Dashboard()">Home</a>
+            <a class="menu-item" onclick="profile()">Profile</a>
+            <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+            <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+
+            <a class="menu-item" onclick="lead()">Lead Genration</a>
+            <a class="menu-item" onclick="leadReport()">Lead Report</a>
+
+            <a class="menu-item" onclick="service()">Service Enquiry</a>
+            <a class="menu-item" onclick="serviceReport()">Service Report</a>
+
+            <!--<a class="menu-item">Tracking</a>
+    <a class="menu-item" onclick="ExpensesVoucher()">Expenses Voucher</a>-->
+            <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+            <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+            <a class="menu-item" onclick="logout()">Log Out</a>
+        </nav>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div id="mainPage" class="page">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <button id="openMenu" class="hamb" aria-label="Open menu">☰</button>
+            <div style="flex:1"></div>
+        </header>
+
+        <!-- USER CARD -->
+        <section class="user-card" aria-label="user card">
+            <div>
+                <h3>Daily Allowances Report</h3>
+                <h4 hidden id="empName"></h4>
+                <small><span hidden id="empId"></span></small>
+            </div>
+        </section>
+
+        <section class="login-card">
+            <div id="TravelReportContainer"></div>
+        </section>
+
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav" role="navigation" aria-label="bottom nav">
+        <a onclick="Dashboard()">🏠</a>
+        <a onclick="Profile()">👤</a>
+        <a onclick="alert('Reports')">🧾</a>
+        <a onclick="alert('Settings')">⚙️</a>
+    </div>
+
+    <script src="cordova.js"></script>
+    <script src="js/menu.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            let user = null;
+            try {
+                const raw = localStorage.getItem("emp_user");
+                if (raw) user = JSON.parse(raw);
+            } catch (e) {
+                console.error("emp_user parse error", e);
+            }
+
+            if (!user || !user.emp_id) {
+                alert("No logged-in user found.");
+                return;
+            }
+
+            document.getElementById("empName").innerText = user.emp_name || "";
+            document.getElementById("empId").innerText = user.emp_id || "";
+
+            // ✅ ROLE BASED MENU (ONLY FIX)
+            const desig = user.designation;
+
+            // SALES MENU
+            const salesRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM- Service", "ACCOUNT EXECUTIVE"];
+            document.querySelectorAll(".sales-menu").forEach(m => {
+                m.style.display = salesRoles.includes(desig) ? "block" : "none";
+            });
+
+            // SERVICE MENU (ONLY Service Enquiry & Service Report)
+            const serviceRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM - Sales", "ACCOUNT EXECUTIVE"];
+            document.querySelectorAll(".service-menu").forEach(m => {
+                m.style.display = serviceRoles.includes(desig) ? "block" : "none";
+            });
+
+            loadTravelReport(user.emp_id);
+        });
+
+        function loadTravelReport(Emp_ID) {
+
+            fetch(`https://empapp.kaizensoftware.in/api/TravelExpences/Travel-report?Emp_ID=${Emp_ID}`)
+                .then(res => {
+                    if (!res.ok) throw new Error(res.status);
+                    return res.json();
+                })
+                .then(data => {
+
+                    let html = "";
+
+                    if (!data || data.length === 0) {
+                        html = `<p style="text-align:center;color:red">No Daily Allowances Found</p>`;
+                    } else {
+                        data.forEach(row => {
+                            html += `
+                        <div class="table-responsive" style="margin-bottom:10px">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Start Km / Location</th>
+                                        <th>Mode</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>${row.TRAVEL_DATE ?? ""}</td>
+                                        <td>${row.START_KM ?? ""} | ${row.START_LOCATION ?? ""}</td>
+                                        <td>${row.MODE_OF_TRANSPORT ?? ""}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>`;
+                        });
+                    }
+
+                    document.getElementById("TravelReportContainer").innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error loading Travel Report");
+                });
+        }
+    </script>
+
+
+</body>
+</html>

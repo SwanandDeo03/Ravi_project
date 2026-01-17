@@ -1,0 +1,434 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Fields Group - Lead</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src * 'self' data: blob: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline';
+               img-src * 'self' data: blob:;
+               style-src * 'self' 'unsafe-inline';
+               script-src * 'self' 'unsafe-inline' 'unsafe-eval';">
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
+    <style>
+        .teal-color {
+            color: teal;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDE MENU -->
+    <div id="sideMenu" class="side-menu" aria-hidden="true">
+        <div class="menu-top">
+            <img src="img/Fields-Group.png" class="menu-logo" />
+            <button id="closeMenu" class="close-btn">✕</button>
+        </div>
+        <nav class="menu-list" id="menuList">
+            <a class="menu-item active" onclick="Dashboard()">Home</a>
+            <a class="menu-item" onclick="profile()">Profile</a>
+            <a class="menu-item" onclick="leaveApplication()">Leave Application</a>
+            <a class="menu-item" onclick="leaveReport()">Leave Report</a>
+
+            <a class="menu-item" onclick="lead()">Lead Genration</a>
+            <a class="menu-item" onclick="leadReport()">Lead Report</a>
+
+            <a class="menu-item" onclick="service()">Service Enquiry</a>
+            <a class="menu-item" onclick="serviceReport()">Service Report</a>
+
+            <!--<a class="menu-item">Tracking</a>
+            <a class="menu-item" onclick="ExpensesVoucher()">Expenses Voucher</a>-->
+            <a class="menu-item" onclick="travel()">Travelling / Daily Allow</a>
+            <a class="menu-item" onclick="travelReport()">Allowances Report</a>
+            <a class="menu-item" onclick="logout()">Log Out</a>
+        </nav>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div id="mainPage" class="page">
+
+        <header class="topbar">
+            <button id="openMenu" class="hamb">☰</button>
+        </header>
+
+        <section class="user-card">
+            <div>
+                <h3>Lead Generation</h3>
+                <h4 hidden id="empName"></h4>
+                <small><span hidden id="empId"></span></small>
+            </div>
+        </section>
+
+        <!-- FORM -->
+        <section class="login-card">
+
+            <label style="color:red">Customer Name</label>
+            <input id="CustomerName" type="text" class="input" placeholder="Customer Name" />
+
+            <label style="color:red">Address</label>
+            <input id="Address" type="text" class="input" placeholder="Address" />
+
+            <label style="color:red">Contact No</label>
+            <input id="ContactNo" class="input" type="tel" inputmode="numeric" pattern="[0-9]*"
+                   maxlength="10" placeholder="Enter Contact No" />
+
+
+            <label style="color:red">Email</label>
+            <input id="Email" class="input" placeholder="Enter Email" />
+
+            <label>GSTN / PAN</label>
+            <input id="GstnNo" class="input" placeholder="Enter GSTN / PAN" maxlength="18" />
+
+            <label for="LeadSource">Lead Source</label>
+            <select id="LeadSource" name="LeadSource" class="input">
+                <option value="">Select Source</option>
+                <option value="Field">Field</option>
+                <option value="Existing">Existing</option>
+                <option value="Reference">Reference</option>
+            </select>
+
+            <label>Model</label>
+            <input list="ModelList" id="ModelProfile" class="input" autocomplete="off" />
+            <datalist id="ModelList"></datalist>
+
+            <label>Customer Profile</label>
+            <input list="ProfileList" id="CustomerProfile" class="input" autocomplete="off" />
+            <datalist id="ProfileList"></datalist>
+
+            <label>Application</label>
+            <input list="ApplicationList" id="Application_List" class="input" autocomplete="off" />
+            <datalist id="ApplicationList"></datalist>
+
+            <label>Financier</label>
+            <input list="FinancierList" id="Financier_List" class="input" autocomplete="off" />
+            <datalist id="FinancierList"></datalist>
+
+            <label>Deal Status</label>
+            <input list="DealList" id="Deal_Status" class="input" autocomplete="off" />
+            <datalist id="DealList"></datalist>
+
+            <label>Followup Date</label>
+            <label for="From_Date_display">(DD/MM/YYYY)</label>
+            <input id="From_Date_display" type="text" class="input" placeholder="DD/MM/YYYY" readonly />
+
+            <input id="From_Date" class="native-date" type="date" />
+
+            <button style="background-color: white; width: 20%;" onclick="openCamera()"> <i class='fa fa-camera teal-color'></i></button>
+            <br /><br />
+            <img id="imgPreview" style="width: 200px; height: 200px; border: 1px solid #ccc; object-fit: cover;" />
+
+            <button id="SubmitBtn" type="button">Submit</button>
+
+        </section>
+
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <a onclick="Dashboard()">🏠</a>
+        <a onclick="alert('Profile')">👤</a>
+        <a onclick="leaveReport()">🧾</a>
+        <a onclick="alert('Settings')">⚙️</a>
+    </div>
+
+    <script src="js/menu.js"></script>
+
+    <script>
+        (function () {
+            var s = document.createElement('script');
+            s.src = 'cordova.js';
+            s.onerror = function () { };
+            document.head.appendChild(s);
+        })();
+    </script>
+
+    <!-- LOCAL STORAGE USER -->
+    <script>
+        let user = null;
+        try {
+            const raw = localStorage.getItem("emp_user");
+            if (raw) user = JSON.parse(raw);
+        } catch (e) {
+            console.error("Error parsing emp_user from localStorage:", e);
+        }
+
+        if (!user || !user.emp_id) {
+            alert("No logged-in user found. Please login first.");
+        } else {
+            document.getElementById("empName").innerText = user.emp_name || "";
+            document.getElementById("empId").innerText = user.emp_id || "";
+        }
+
+        // ✅ ROLE BASED MENU (ONLY FIX)
+        const desig = user.designation;
+
+        // SALES MENU
+        const salesRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM- Service", "ACCOUNT EXECUTIVE"];
+        document.querySelectorAll(".sales-menu").forEach(m => {
+            m.style.display = salesRoles.includes(desig) ? "block" : "none";
+        });
+
+        // SERVICE MENU (ONLY Service Enquiry & Service Report)
+        const serviceRoles = ["Driver", "Workshop Manager", "Office Maid", "Store incharge", "ACCOUNT MANAGER", "OFFICE BOY", "Parts Manager", "CRM - Sales", "ACCOUNT EXECUTIVE"];
+        document.querySelectorAll(".service-menu").forEach(m => {
+            m.style.display = serviceRoles.includes(desig) ? "block" : "none";
+        });
+
+
+        const fromNative = document.getElementById("From_Date");
+        const fromDisplay = document.getElementById("From_Date_display");
+
+        function formatToDDMMYYYY(isoDate) {
+            if (!isoDate) return "";
+            const parts = isoDate.split("-");
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function setTodayFor(nativeEl, displayEl) {
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yyyy = now.getFullYear();
+            const iso = `${yyyy}-${mm}-${dd}`;
+            nativeEl.value = iso;
+            displayEl.value = formatToDDMMYYYY(iso);
+        }
+
+        setTodayFor(fromNative, fromDisplay);
+
+        fromNative.addEventListener("change", function () {
+            fromDisplay.value = formatToDDMMYYYY(fromNative.value);
+        });
+
+        function openNativePicker(displayEl, nativeEl) {
+            displayEl.addEventListener("click", function () {
+                if (typeof nativeEl.showPicker === "function") {
+                    nativeEl.showPicker();
+                } else {
+                    nativeEl.focus();
+                    nativeEl.click();
+                }
+            });
+        }
+
+        openNativePicker(fromDisplay, fromNative);
+    </script>
+
+    <!-- LOAD LISTS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("https://empapp.kaizensoftware.in/api/LeadApi/Customer_Profile")
+                .then(r => r.json())
+                .then(data => {
+                    let list = document.getElementById("ProfileList");
+                    list.innerHTML = "";
+                    data.forEach(i => {
+                        if (i.PROJECT_NAME) {
+                            let opt = document.createElement("option");
+                            opt.value = i.PROJECT_NAME;
+                            list.appendChild(opt);
+                        }
+                    });
+                }).catch(() => { });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("https://empapp.kaizensoftware.in/api/LeadApi/Model")
+                .then(r => r.json())
+                .then(data => {
+                    let list = document.getElementById("ModelList");
+                    list.innerHTML = "";
+                    data.forEach(i => {
+                        if (i.PROJECT_NAME) {
+                            let opt = document.createElement("option");
+                            opt.value = i.PROJECT_NAME;
+                            list.appendChild(opt);
+                        }
+                    });
+                }).catch(() => { });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("https://empapp.kaizensoftware.in/api/LeadApi/Application")
+                .then(r => r.json())
+                .then(data => {
+                    let list = document.getElementById("ApplicationList");
+                    list.innerHTML = "";
+                    data.forEach(i => {
+                        if (i.PROJECT_NAME) {
+                            let opt = document.createElement("option");
+                            opt.value = i.PROJECT_NAME;
+                            list.appendChild(opt);
+                        }
+                    });
+                }).catch(() => { });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("https://empapp.kaizensoftware.in/api/LeadApi/Financier")
+                .then(r => r.json())
+                .then(data => {
+                    let list = document.getElementById("FinancierList");
+                    list.innerHTML = "";
+                    data.forEach(i => {
+                        if (i.PROJECT_NAME) {
+                            let opt = document.createElement("option");
+                            opt.value = i.PROJECT_NAME;
+                            list.appendChild(opt);
+                        }
+                    });
+                }).catch(() => { });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("https://empapp.kaizensoftware.in/api/LeadApi/Deal")
+                .then(r => r.json())
+                .then(data => {
+                    let list = document.getElementById("DealList");
+                    list.innerHTML = "";
+                    data.forEach(i => {
+                        if (i.PROJECT_NAME) {
+                            let opt = document.createElement("option");
+                            opt.value = i.PROJECT_NAME;
+                            list.appendChild(opt);
+                        }
+                    });
+                }).catch(() => { });
+        });
+    </script>
+
+    <!-- SUBMIT -->
+    <script>
+        window.onload = function () {
+
+            document.getElementById("SubmitBtn").onclick = async function () {
+
+                let user = JSON.parse(localStorage.getItem("emp_user") || "{}");
+                let VoucherDate = document.getElementById("From_Date").value.trim();
+
+                if (!VoucherDate) {
+                    let ddmmyyyy = document.getElementById("From_Date_display").value;
+                    let parts = ddmmyyyy.split("/");
+                    if (parts.length === 3) {
+                        VoucherDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                }
+
+                let fd = new FormData();
+                fd.append("emp_id", user.emp_id);
+                fd.append("CustomerName", document.getElementById("CustomerName").value);
+                fd.append("Address", document.getElementById("Address").value);
+                fd.append("ContactNo", document.getElementById("ContactNo").value);
+                fd.append("Email", document.getElementById("Email").value);
+                fd.append("GSTN_NO", document.getElementById("GstnNo").value);
+                fd.append("LeadSource", document.getElementById("LeadSource").value);
+                fd.append("ModelName", document.getElementById("ModelProfile").value);
+                fd.append("CustomerProfile", document.getElementById("CustomerProfile").value);
+                fd.append("Application", document.getElementById("Application_List").value);
+                fd.append("Financier", document.getElementById("Financier_List").value);
+                fd.append("DealStatus", document.getElementById("Deal_Status").value);
+                fd.append("FollowupDate", VoucherDate);
+
+                // ✅ IMAGE DATA (FIX)
+                fd.append("ImageBase64", capturedImageBase64);
+                fd.append("FileName", "lead_" + Date.now() + ".jpg");
+
+                let response = await fetch("https://empapp.kaizensoftware.in/api/LeadApi/Add_Lead", {
+                    method: "POST",
+                    body: fd
+                });
+
+                let json = await response.json();
+                alert(json.message);
+
+                setTimeout(() => {
+                    window.location.href = "Home.html";
+                }, 1500);
+            };
+        };
+    </script>
+
+
+    <!------------Camera code------------->
+    <!------------Camera code-------------->
+    <script>
+        let cameraReady = false;
+
+        document.addEventListener("deviceready", function () {
+            cameraReady = true;
+            console.log("Camera ready");
+        }, false);
+
+        function openCamera() {
+
+            if (!cameraReady) {
+                alert("Device not ready. Please wait...");
+                return;
+            }
+
+            if (!navigator.camera) {
+                alert("Camera plugin not found");
+                return;
+            }
+
+            navigator.camera.getPicture(
+                function (imageData) {
+
+                    capturedImageBase64 = imageData; // ✅ STORE IMAGE
+
+                    var img = document.getElementById("imgPreview");
+                    img.src = "data:image/jpeg;base64," + imageData;
+
+                },
+                function (error) {
+                    alert("Camera error: " + error);
+                },
+
+            }
+    </script>
+
+    <!-------------- pic upload------------>
+    <!--<script>
+        function uploadImage(base64Image) {
+
+            var data = {
+                ImageBase64: base64Image,
+                FileName: "customer_" + new Date().getTime() + ".jpg"
+            };
+
+            fetch("https://empapp.kaizensoftware.in/api/LeadApi/SaveImage", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.Status === 1) {
+                        alert("Image saved successfully");
+                    } else {
+                        alert("Upload failed");
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error uploading image");
+                });
+        }
+    </script>-->
+
+
+
+</body>
+</html>
