@@ -134,7 +134,7 @@
     </div>
 
     <script src="js/menu.js"></script>
-
+    <script src="cordova.js"></script>
     <script>
         (function () {
             var s = document.createElement('script');
@@ -340,8 +340,8 @@
                 fd.append("FollowupDate", VoucherDate);
 
                 // ✅ IMAGE DATA (FIX)
-                fd.append("ImageBase64", capturedImageBase64);
-                fd.append("FileName", "lead_" + Date.now() + ".jpg");
+                // fd.append("ImageBase64", capturedImageBase64);
+                //fd.append("FileName", "lead_" + Date.now() + ".jpg");
 
                 let response = await fetch("https://empapp.kaizensoftware.in/api/LeadApi/Add_Lead", {
                     method: "POST",
@@ -359,20 +359,21 @@
     </script>
 
 
-    <!------------Camera code------------->
+
     <!------------Camera code-------------->
     <script>
         let cameraReady = false;
+        let capturedImageBase64 = "";
 
         document.addEventListener("deviceready", function () {
             cameraReady = true;
-            console.log("Camera ready");
+            console.log("Device ready, camera available");
         }, false);
 
         function openCamera() {
 
             if (!cameraReady) {
-                alert("Device not ready. Please wait...");
+                alert("Device not ready yet");
                 return;
             }
 
@@ -384,17 +385,24 @@
             navigator.camera.getPicture(
                 function (imageData) {
 
-                    capturedImageBase64 = imageData; // ✅ STORE IMAGE
+                    capturedImageBase64 = imageData;
 
-                    var img = document.getElementById("imgPreview");
-                    img.src = "data:image/jpeg;base64," + imageData;
-
+                    document.getElementById("imgPreview").src =
+                        "data:image/jpeg;base64," + imageData;
                 },
                 function (error) {
                     alert("Camera error: " + error);
                 },
-
-            }
+                {
+                    quality: 70,
+                    destinationType: Camera.DestinationType.DATA_URL,
+                    sourceType: Camera.PictureSourceType.CAMERA,
+                    encodingType: Camera.EncodingType.JPEG,
+                    correctOrientation: true,
+                    saveToPhotoAlbum: false
+                }
+            );
+        }
     </script>
 
     <!-------------- pic upload------------>
